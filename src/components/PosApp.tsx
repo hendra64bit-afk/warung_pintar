@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Package, History as HistoryIcon, BarChart3, LogOut, ArrowDownRight, Settings, User as UserIcon } from 'lucide-react';
+import { ShoppingCart, Package, History as HistoryIcon, BarChart3, LogOut, ArrowDownRight, Settings, User as UserIcon, Sparkles } from 'lucide-react';
 import { storage } from '@/src/lib/storage';
 import { Product, CartItem, Transaction, PurchaseRecord, User } from '@/src/types';
 import CashierTab from './CashierTab';
@@ -14,6 +14,7 @@ import HistoryTab from './HistoryTab';
 import ReportTab from './ReportTab';
 import PurchaseHistoryTab from './PurchaseHistoryTab';
 import SettingsTab from './SettingsTab';
+import AiAnalysisTab from './AiAnalysisTab';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 
@@ -267,6 +268,13 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Laporan
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="ai-analysis" 
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+                >
+                  <Sparkles className="w-4 h-4 mr-2 text-indigo-500 animate-pulse" />
+                  Analisa AI
+                </TabsTrigger>
               </>
             )}
             <TabsTrigger 
@@ -319,6 +327,10 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
 
               <TabsContent value="reports" className="min-h-full m-0 outline-none">
                 <ReportTab transactions={transactions} />
+              </TabsContent>
+
+              <TabsContent value="ai-analysis" className="min-h-full m-0 outline-none">
+                <AiAnalysisTab products={products} transactions={transactions} />
               </TabsContent>
             </>
           )}
