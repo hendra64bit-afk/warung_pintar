@@ -147,14 +147,14 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Account Info - Visible to Everyone */}
       <Card className="border-slate-200 shadow-sm rounded-2xl bg-white overflow-hidden border">
-        <CardHeader className="bg-indigo-600 p-6 text-white">
+        <CardHeader className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
               <Users className="w-6 h-6" />
             </div>
             <div>
               <CardTitle className="text-xl font-bold">Profil Pengguna</CardTitle>
-              <CardDescription className="text-indigo-100">
+              <CardDescription className="text-white/85">
                 Informasi akun yang sedang digunakan saat ini.
               </CardDescription>
             </div>
@@ -177,7 +177,7 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
                 <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Role Akses</Label>
                 <div className="flex justify-end mt-1">
                   <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border-2 ${
-                    isAdmin ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                    isAdmin ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
                   }`}>
                     {isAdmin ? 'PEMILIK / ADMIN' : 'Petugas Kasir'}
                   </span>
@@ -205,11 +205,11 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
                     <CardDescription className="text-slate-500">Tambah atau hapus akses kasir.</CardDescription>
                   </div>
                 </div>
-
+ 
                 <Dialog>
                   <DialogTrigger 
                     render={
-                      <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold uppercase tracking-widest text-[10px]">
+                      <Button className="rounded-xl bg-blue-600 hover:bg-blue-700 font-bold uppercase tracking-widest text-[10px]">
                         <UserPlus className="w-4 h-4 mr-2" />
                         Tambah User
                       </Button>

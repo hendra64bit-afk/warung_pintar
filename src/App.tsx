@@ -39,12 +39,19 @@ export default function App() {
   if (!isInitialized) return null;
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed font-sans text-slate-900" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')" }}>
-      {currentUser ? (
-        <PosApp currentUser={currentUser} onLogout={handleLogout} />
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
+    <div className="min-h-screen bg-gradient-to-tr from-emerald-50/20 via-blue-50/50 to-indigo-100/30 font-sans text-slate-900 relative overflow-hidden">
+      {/* Soft elegant background blobs to create a beautiful, ambient Tahoe-style clean glass layout */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-blue-300/20 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 -right-20 w-96 h-96 rounded-full bg-purple-300/20 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 left-1/3 w-96 h-96 rounded-full bg-indigo-200/20 blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {currentUser ? (
+          <PosApp currentUser={currentUser} onLogout={handleLogout} />
+        ) : (
+          <Login onLogin={handleLogin} />
+        )}
+      </div>
       <Toaster position="top-center" richColors />
     </div>
   );

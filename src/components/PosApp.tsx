@@ -376,31 +376,31 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
   return (
     <div className="h-screen w-full p-2 md:p-6 lg:p-8 flex flex-col overflow-hidden relative">
       {/* Decorative window frame */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-white/60 backdrop-blur-3xl rounded-[2rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] border border-white/60 relative">
+      <div className="flex-1 flex flex-col overflow-hidden bg-white/75 backdrop-blur-3xl rounded-[3rem] shadow-2xl shadow-indigo-900/5 border border-white/80 relative">
         
         {/* macOS Desktop Window Header */}
-        <header className="bg-white/40 border-b border-white/50 px-4 py-3 flex items-center justify-between shrink-0">
+        <header className="bg-white/50 border-b border-slate-100/80 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex gap-2">
-              <div className="w-3.5 h-3.5 rounded-full bg-red-400 shadow-sm border border-red-500/20" />
-              <div className="w-3.5 h-3.5 rounded-full bg-amber-400 shadow-sm border border-amber-500/20" />
-              <div className="w-3.5 h-3.5 rounded-full bg-green-400 shadow-sm border border-green-500/20" />
+              <div className="w-3 h-3 rounded-full bg-red-400/80 shadow-sm border border-red-500/10" />
+              <div className="w-3 h-3 rounded-full bg-amber-400/80 shadow-sm border border-amber-500/10" />
+              <div className="w-3 h-3 rounded-full bg-green-400/80 shadow-sm border border-green-500/10" />
             </div>
             <div className="flex items-center gap-3 ml-4">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200/50">
                 <ShoppingCart className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-slate-900 leading-none">{storeName}</h1>
+                <h1 className="text-sm font-black bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent leading-none">{storeName}</h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">POS v2.0</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">POS v2.0</span>
                   <span className="text-slate-300 select-none leading-none">•</span>
                   {dbConnected ? (
-                    <span className="inline-flex items-center gap-1 text-[8px] font-black text-emerald-600 uppercase tracking-wider leading-none">
+                    <span className="inline-flex items-center gap-1 text-[8px] font-black text-blue-600 uppercase tracking-wider leading-none">
                       ONLINE
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[8px] font-black text-rose-600 uppercase tracking-wider leading-none animate-pulse">
+                    <span className="inline-flex items-center gap-1 text-[8px] font-black text-rose-500 uppercase tracking-wider leading-none animate-pulse">
                       OFFLINE
                     </span>
                   )}
@@ -414,14 +414,14 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
               <span className="text-xs font-bold text-slate-800">{currentUser.name}</span>
               <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-tighter">{currentUser.role === 'admin' ? 'Administrator' : 'Kasir'}</span>
             </div>
-            <div className="w-8 h-8 bg-white/50 rounded-full flex items-center justify-center border border-white shadow-sm overflow-hidden backdrop-blur-md">
-              <UserIcon className="w-4 h-4 text-slate-500" />
+            <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden backdrop-blur-md">
+              <UserIcon className="w-4 h-4 text-slate-400" />
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={onLogout}
-              className="w-8 h-8 rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50/50 transition-colors"
+              className="w-8 h-8 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50/50 transition-colors"
               title="Keluar"
             >
               <LogOut className="w-4 h-4" />
@@ -430,25 +430,25 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
         </header>
 
         <Tabs defaultValue="cashier" className="flex-1 flex flex-col min-h-0">
-          <div className="bg-white/30 border-b border-white/50 px-4 md:px-6 shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <TabsList className="h-12 bg-transparent gap-6 md:gap-8 w-max min-w-full justify-start items-center flex-nowrap">
+          <div className="bg-white/20 border-b border-slate-100/80 px-6 shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <TabsList className="h-14 bg-transparent gap-6 md:gap-8 w-max min-w-full justify-start items-center flex-nowrap">
             <TabsTrigger 
               value="cashier" 
-              className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+              className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-blue-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
               Kasir
             </TabsTrigger>
             <TabsTrigger 
               value="products" 
-              className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+              className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-blue-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
             >
               <Package className="w-4 h-4 mr-2" />
               Produk
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+              className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-blue-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
             >
               <HistoryIcon className="w-4 h-4 mr-2" />
               Penjualan
@@ -457,30 +457,30 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
               <>
                 <TabsTrigger 
                   value="purchases" 
-                  className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-purple-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
                 >
                   <ArrowDownRight className="w-4 h-4 mr-2" />
                   Pembelian
                 </TabsTrigger>
                 <TabsTrigger 
                   value="reports" 
-                  className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-purple-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
                 >
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Laporan
                 </TabsTrigger>
                 <TabsTrigger 
                   value="ai-analysis" 
-                  className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+                  className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-purple-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
                 >
-                  <Sparkles className="w-4 h-4 mr-2 text-indigo-500 animate-pulse" />
+                  <Sparkles className="w-4 h-4 mr-2 text-purple-500 animate-pulse" />
                   Analisa AI
                 </TabsTrigger>
               </>
             )}
             <TabsTrigger 
               value="settings" 
-              className="h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-indigo-600 font-bold text-xs uppercase tracking-widest transition-all px-0 ml-auto"
+              className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-slate-800 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-slate-800 font-bold text-xs uppercase tracking-widest transition-all px-0 ml-auto"
             >
               <Settings className="w-4 h-4 mr-2" />
               Pengaturan

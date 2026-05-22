@@ -258,7 +258,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
                         <Button variant="ghost" size="icon" onClick={() => handleOpenAddStock(product)} title="Tambah Stok" className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50">
                           <PlusCircle className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} className="text-slate-400 hover:text-blue-600 hover:bg-blue-50/50">
                           <Pencil className="w-4 h-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(product)} className="text-slate-400 hover:text-destructive hover:bg-rose-50">
@@ -411,7 +411,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="rounded-xl h-12 font-bold flex-1 border-slate-200">Batal</Button>
-              <Button onClick={handleSave} className="rounded-xl bg-slate-900 hover:bg-black h-12 font-bold flex-1">Simpan Data</Button>
+              <Button onClick={handleSave} className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-100/50 h-12 font-bold flex-1">Simpan Data</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -483,21 +483,21 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
                     onChange={(e) => setAddStockAmount(Math.max(0, Number(e.target.value)))} 
                     placeholder="0"
                     autoFocus
-                    className="rounded-xl border-slate-200 h-14 text-2xl font-mono font-bold text-center focus-visible:ring-indigo-600"
+                    className="rounded-xl border-slate-200 h-14 text-2xl font-mono font-bold text-center focus-visible:ring-blue-600"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+              <div className="flex flex-col gap-2 p-4 bg-purple-50/40 rounded-2xl border border-purple-100/60">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-medium text-slate-500">Total Biaya Kulakan:</span>
                   <span className="text-sm font-black text-rose-600 font-mono">
                     {formatCurrency(addStockAmount * addStockPrice)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-indigo-100">
+                <div className="flex justify-between items-center pt-2 border-t border-purple-100">
                   <span className="text-xs font-medium text-slate-500">Total Stok Setelahnya:</span>
-                  <span className="text-lg font-black text-indigo-600 font-mono">
+                  <span className="text-lg font-black text-purple-600 font-mono">
                     {Number(((productToAddStock?.stock || 0) + addStockAmount).toFixed(4))} {productToAddStock?.satuan || 'Pcs'}
                   </span>
                 </div>
@@ -505,7 +505,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setIsAddStockDialogOpen(false)} className="rounded-xl h-12 font-bold flex-1 border-slate-200">Batal</Button>
-              <Button onClick={confirmUpdateStock} className="rounded-xl bg-slate-900 hover:bg-black h-12 font-bold flex-1">Simpan Stok</Button>
+              <Button onClick={confirmUpdateStock} className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-xl shadow-purple-100/40 h-12 font-bold flex-1">Simpan Stok</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

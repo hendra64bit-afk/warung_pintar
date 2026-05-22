@@ -120,9 +120,9 @@ export default function HistoryTab({ transactions, onDelete, onReturnBatch, isAd
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-indigo-600 text-white rounded-2xl shadow-lg border-none overflow-hidden relative">
+        <Card className="bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl shadow-lg border-none overflow-hidden relative">
            <div className="p-6 relative z-10">
-              <p className="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-2">Total Pendapatan</p>
+              <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-2">Total Pendapatan</p>
               <h2 className="text-3xl font-black font-mono tracking-tight">{formatCurrency(totalRevenue)}</h2>
            </div>
            <div className="absolute top-0 right-0 p-4 opacity-10">

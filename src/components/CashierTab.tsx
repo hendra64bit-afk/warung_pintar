@@ -235,27 +235,27 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
       {/* Products Column */}
       <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
         {/* Search & Filter Bar */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
           <div className="flex gap-2 w-full md:w-auto overflow-hidden">
-            <form onSubmit={handleBarcodeSearch} className="flex-1 flex bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 min-w-0 group focus-within:ring-2 focus-within:ring-indigo-600 transition-all">
-              <Barcode className="w-5 h-5 text-indigo-400 mr-2 group-focus-within:text-indigo-600 shrink-0" />
+            <form onSubmit={handleBarcodeSearch} className="flex-1 flex bg-blue-50/50 px-4 py-2 rounded-xl border border-blue-100 min-w-0 group focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+              <Barcode className="w-5 h-5 text-blue-400 mr-2 group-focus-within:text-blue-600 shrink-0" />
               <input 
                 type="text" 
                 placeholder="Scan Barcode manual..." 
-                className="bg-transparent border-none outline-none text-sm w-full text-indigo-900 placeholder:text-indigo-300 h-6 font-mono min-w-[130px]"
+                className="bg-transparent border-none outline-none text-sm w-full text-blue-950 placeholder:text-blue-300 h-6 font-mono min-w-[130px]"
                 value={barcodeSearch}
                 onChange={(e) => setBarcodeSearch(e.target.value)}
               />
             </form>
             <button 
               onClick={() => setShowScanner(true)}
-              className="px-3 py-2 bg-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-200 transition-colors shrink-0 flex items-center justify-center border border-indigo-200"
+              className="px-3 py-2 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors shrink-0 flex items-center justify-center border border-blue-200"
               title="Gunakan Kamera Kamera Device"
             >
               <Camera className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex-1 flex bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 w-full">
+          <div className="flex-1 flex bg-slate-50/80 px-4 py-2 rounded-xl border border-slate-100 w-full">
             <Search className="w-5 h-5 text-slate-400 mr-2" />
             <input 
               type="text" 
@@ -272,8 +272,8 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
                   activeCategory === cat 
-                    ? 'bg-indigo-600 text-white border-indigo-600' 
-                    : 'bg-white text-slate-600 border-slate-200'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100/50' 
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
                 {cat}
@@ -290,21 +290,21 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
               return (
                 <div 
                   key={product.id} 
-                  className={`bg-white p-2 rounded-xl border-2 transition-all shadow-sm cursor-pointer relative group ${
-                    inCart ? 'border-indigo-600 ring-2 ring-indigo-50' : 'border-transparent hover:border-indigo-500'
+                  className={`bg-white p-2 rounded-2xl border-2 transition-all shadow-sm cursor-pointer relative group ${
+                    inCart ? 'border-blue-500 ring-4 ring-blue-50' : 'border-transparent hover:border-blue-200 hover:shadow-md'
                   } ${product.stock <= 0 ? 'opacity-60 grayscale' : ''}`}
                   onClick={() => addToCart(product)}
                 >
                   {inCart && (
-                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg z-10 scale-110">
+                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg z-10 scale-110">
                       {inCart.quantity}
                     </div>
                   )}
-                  <div className="w-full aspect-square bg-slate-50 rounded-lg mb-2 flex items-center justify-center text-slate-200 group-hover:text-indigo-200 transition-colors overflow-hidden relative">
+                  <div className="w-full aspect-square bg-slate-50 rounded-xl mb-2 flex items-center justify-center text-slate-200 group-hover:text-blue-200 transition-colors overflow-hidden relative">
                     {product.image ? (
                       <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" referrerPolicy="no-referrer" />
                     ) : (
-                      <Package className="w-8 h-8" />
+                      <Package className="w-8 h-8 pointer-events-none" />
                     )}
                     {product.stock <= 0 && (
                       <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
@@ -314,8 +314,8 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
                   </div>
                   <h3 className="text-[11px] font-bold text-slate-800 truncate leading-tight">{product.name}</h3>
                   <div className="flex flex-col gap-0.5 mt-0.5">
-                    <p className="text-indigo-600 font-bold text-[11px] font-mono leading-none">{formatCurrency(product.price)}</p>
-                    <span className={`text-[8px] font-bold uppercase ${product.stock <= 5 ? 'text-rose-500' : 'text-slate-400'}`}>
+                    <p className="text-blue-600 font-bold text-[11px] font-mono leading-none">{formatCurrency(product.price)}</p>
+                    <span className={`text-[8px] font-bold uppercase ${product.stock <= 5 ? 'text-rose-500 font-extrabold' : 'text-slate-400'}`}>
                       Stok: {product.stock}
                     </span>
                   </div>
@@ -327,17 +327,17 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-transform hover:scale-[1.02]">
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-transform hover:scale-[1.02]">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Omzet Hari Ini</p>
             <h4 className="text-xl font-black text-slate-800 font-mono">{formatCurrency(dailyRevenue)}</h4>
           </div>
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-transform hover:scale-[1.02]">
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-transform hover:scale-[1.02]">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Transaksi</p>
             <h4 className="text-xl font-black text-slate-800">{todayTransactions.length} Pesanan</h4>
           </div>
-          <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 shadow-sm transition-transform hover:scale-[1.02]">
-            <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mb-1">Total Item Jual</p>
-            <h4 className="text-xl font-black text-indigo-700">{products.length} Produk</h4>
+          <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50 shadow-sm transition-transform hover:scale-[1.02]">
+            <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-1">Total Item Jual</p>
+            <h4 className="text-xl font-black text-purple-700">{products.length} Produk</h4>
           </div>
         </div>
       </div>
@@ -403,13 +403,13 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
                 <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5">
                   <button 
                     onClick={() => setDiscountType('percentage')}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${discountType === 'percentage' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${discountType === 'percentage' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     %
                   </button>
                   <button 
                     onClick={() => setDiscountType('amount')}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${discountType === 'amount' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${discountType === 'amount' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     RP
                   </button>
@@ -438,23 +438,23 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
             </div>
             <div className="flex justify-between text-lg font-black text-slate-800 pt-3 border-t border-slate-200">
               <span>Total</span>
-              <span className="text-indigo-600 font-mono tracking-tight">{formatCurrency(total)}</span>
+              <span className="text-blue-600 font-mono tracking-tight">{formatCurrency(total)}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <button className="flex flex-col items-center justify-center py-3 border border-indigo-200 rounded-xl bg-white text-indigo-600 font-bold hover:bg-indigo-50 transition-colors shadow-sm active:scale-95">
-              <CreditCard className="w-5 h-5 mb-1" />
-              <span className="text-[9px] uppercase tracking-wider">TRANSFER</span>
+            <button className="flex flex-col items-center justify-center py-3 border border-blue-200 rounded-2xl bg-white text-blue-600 font-semibold hover:bg-blue-50/50 transition-colors shadow-sm active:scale-95 text-[10px] uppercase tracking-wider">
+              <CreditCard className="w-4 h-4 mb-1 text-blue-500" />
+              <span>TRANSFER</span>
             </button>
-            <button className="flex flex-col items-center justify-center py-3 border border-slate-200 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors shadow-sm active:scale-95">
-              <CreditCard className="w-5 h-5 mb-1" />
-              <span className="text-[9px] uppercase tracking-wider">TUNAI</span>
+            <button className="flex flex-col items-center justify-center py-3 border border-purple-200 rounded-2xl bg-white text-purple-600 font-semibold hover:bg-purple-50/50 transition-colors shadow-sm active:scale-95 text-[10px] uppercase tracking-wider">
+              <CreditCard className="w-4 h-4 mb-1 text-purple-500" />
+              <span>TUNAI</span>
             </button>
           </div>
 
           <Button 
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-7 rounded-2xl shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] text-lg uppercase tracking-tight"
+            className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white font-black py-7 rounded-2xl shadow-xl shadow-indigo-100/50 transition-all active:scale-[0.98] text-lg uppercase tracking-tight"
             disabled={cart.length === 0}
             onClick={() => setShowCheckout(true)}
           >
@@ -518,7 +518,7 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
 
           <DialogFooter>
             <Button 
-              className="w-full h-14 rounded-2xl text-lg font-bold bg-slate-900 hover:bg-black"
+              className="w-full h-14 rounded-2xl text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100"
               disabled={typeof paidAmount !== 'number' || paidAmount < total}
               onClick={handleCheckout}
             >
@@ -533,7 +533,7 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
         <DialogContent className="sm:max-w-[425px] rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Camera className="w-5 h-5 text-indigo-600" />
+              <Camera className="w-5 h-5 text-blue-600" />
               Scan Barcode Produk
             </DialogTitle>
             <DialogDescription>
