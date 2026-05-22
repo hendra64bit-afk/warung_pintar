@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Product inventory item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "costPrice": { "type": "number" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "stock": { "type": "number" },
+        "barcode": { "type": "string" },
+        "image": { "type": "string" },
+        "purchaseDate": { "type": "string" }
+      },
+      "required": ["id", "name", "costPrice", "price", "category", "stock"]
+    },
+    "TransactionItem": {
+      "title": "TransactionItem",
+      "description": "An item inside a transaction cart",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "costPrice": { "type": "number" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "stock": { "type": "number" },
+        "quantity": { "type": "number" },
+        "returnedQuantity": { "type": "number" }
+      },
+      "required": ["id", "name", "costPrice", "price", "category", "quantity"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Customer purchase transaction record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discountType": { "type": "string", "enum": ["percentage", "amount"] },
+        "discountValue": { "type": "number" },
+        "total": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "change": { "type": "number" },
+        "timestamp": { "type": "number" },
+        "status": { "type": "string", "enum": ["completed", "returned"] }
+      },
+      "required": ["id", "items", "subtotal", "total", "paidAmount", "change", "timestamp"]
+    },
+    "PurchaseRecord": {
+      "title": "PurchaseRecord",
+      "description": "Record of purchasing stock from a supplier",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "costPrice": { "type": "number" },
+        "totalCost": { "type": "number" },
+        "date": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["id", "productId", "productName", "quantity", "costPrice", "totalCost", "date", "timestamp"]
+    },
+    "User": {
+      "title": "User",
+      "description": "POS operator or Administrator details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "cashier"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "username", "password", "name", "role", "createdAt"]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "General settings of the warung store",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string" }
+      },
+      "required": ["storeName"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Inventory product collection"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Customer transactions collection"
+    },
+    "/purchases/{purchaseId}": {
+      "schema": "PurchaseRecord",
+      "description": "Stock purchase from supplier collection"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Store users collection"
+    },
+    "/settings/{settingId}": {
+      "schema": "StoreSettings",
+      "description": "Warung general configurations"
+    }
+  }
+}

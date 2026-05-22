@@ -15,6 +15,14 @@ import { User, UserRole } from '@/src/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
+// Cloud Sync Helpers
+import { 
+  saveStoreNameCloud, 
+  saveUserToCloud, 
+  deleteUserFromCloud, 
+  syncAllBackupDataToCloud 
+} from '@/src/lib/firestoreSync';
+
 interface SettingsTabProps {
   onRefresh: () => void;
   currentUser: User;
@@ -39,13 +47,14 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
     setUsers(storage.getUsers());
   }, []);
 
-  const handleSaveStoreName = () => {
+  const handleSaveStoreName = async () => {
     storage.setStoreName(storeName);
-    toast.success('Nama toko berhasil diperbarui.');
+    await saveStoreNameCloud(storeName);
+    toast.success('Nama toko berhasil diperbarui di cloud.');
     onRefresh();
   };
 
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     if (!newUser.username || !newUser.password || !newUser.name) {
       toast.error('Semua field harus diisi.');
       return;
@@ -67,11 +76,14 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
     setUsers(updatedUsers);
     storage.saveUsers(updatedUsers);
     
+    // Cloud Sync
+    await saveUserToCloud(userToAdd);
+    
     setNewUser({ username: '', password: '', name: '', role: 'cashier' });
     toast.success(`User ${userToAdd.name} berhasil dibuat.`);
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (userId === currentUser.id) {
       toast.error('Anda tidak bisa menghapus diri sendiri.');
       return;
@@ -80,6 +92,10 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
     const updatedUsers = users.filter(u => u.id !== userId);
     setUsers(updatedUsers);
     storage.saveUsers(updatedUsers);
+    
+    // Cloud Sync
+    await deleteUserFromCloud(userId);
+    
     toast.info('User berhasil dihapus.');
   };
 
@@ -103,7 +119,7 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const content = e.target?.result as string;
         const data = JSON.parse(content);
@@ -113,8 +129,12 @@ export default function SettingsTab({ onRefresh, currentUser }: SettingsTabProps
         }
 
         storage.importData(data);
+        
+        // Sync full restored contents to Cloud DB
+        await syncAllBackupDataToCloud(data);
+        
         onRefresh();
-        toast.success('Restore data berhasil dilakukan.');
+        toast.success('Restore data berhasil diselaraskan ke cloud.');
       } catch (err) {
         toast.error('Gagal restore data: ' + (err instanceof Error ? err.message : 'File tidak valid'));
       }

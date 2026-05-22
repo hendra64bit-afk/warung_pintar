@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Package, PlusCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, PlusCircle, Camera } from 'lucide-react';
 import { Product, PurchaseRecord } from '@/src/types';
 import { formatCurrency } from '@/src/lib/format';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import BarcodeScanner from './BarcodeScanner';
 
 interface ProductTabProps {
   products: Product[];
@@ -29,6 +30,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [addStockAmount, setAddStockAmount] = useState<number>(0);
   const [addStockPrice, setAddStockPrice] = useState<number>(0);
   const [addStockDate, setAddStockDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -43,7 +45,8 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
       category: 'Lain-lain', 
       stock: 0, 
       image: '',
-      purchaseDate: new Date().toISOString().split('T')[0]
+      purchaseDate: new Date().toISOString().split('T')[0],
+      satuan: 'Pcs'
     });
     setIsDialogOpen(true);
   };
@@ -124,7 +127,10 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
       return;
     }
 
-    const payload = { ...formData };
+    const payload = { 
+      ...formData,
+      satuan: formData.satuan?.trim() || 'Pcs'
+    };
 
     if (editingProduct) {
       onUpdateProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...payload } as Product : p));
@@ -238,7 +244,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
                   </TableCell>
                   <TableCell className="text-right">
                     <span className={`font-mono font-bold ${product.stock <= 5 ? 'text-rose-600' : 'text-slate-700'}`}>
-                      {product.stock}
+                      {product.stock} {product.satuan || 'Pcs'}
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-mono font-medium text-slate-500">{formatCurrency(product.costPrice)}</TableCell>
@@ -274,7 +280,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
             <DialogHeader>
               <DialogTitle className="text-2xl font-black text-slate-800">{editingProduct ? 'Edit Produk' : 'Tambah Produk'}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-6">
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2 -mr-2 scrollbar-thin">
               <div className="flex justify-center mb-4">
                 <div 
                   className="w-32 h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors relative overflow-hidden group"
@@ -305,13 +311,23 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
 
               <div className="space-y-2">
                 <Label htmlFor="barcode" className="text-xs font-bold uppercase tracking-wider text-slate-500">Barcode / SKU</Label>
-                <Input 
-                  id="barcode" 
-                  value={formData.barcode || ''} 
-                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} 
-                  placeholder="Scan barcode atau masukkan SKU..."
-                  className="rounded-xl border-slate-200 h-12 focus-visible:ring-indigo-600 font-medium font-mono"
-                />
+                <div className="flex gap-2">
+                  <Input 
+                    id="barcode" 
+                    value={formData.barcode || ''} 
+                    onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} 
+                    placeholder="Scan barcode manual..."
+                    className="flex-1 rounded-xl border-slate-200 h-12 focus-visible:ring-indigo-600 font-medium font-mono"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="h-12 w-12 rounded-xl shrink-0" 
+                    onClick={() => setShowScanner(true)}
+                  >
+                    <Camera className="w-5 h-5 text-slate-500" />
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">Nama Produk</Label>
@@ -345,16 +361,28 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="stock" className="text-xs font-bold uppercase tracking-wider text-slate-500">Stok Barang</Label>
-                <Input 
-                  id="stock" 
-                  type="number"
-                  value={formData.stock} 
-                  onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })} 
-                  placeholder="0"
-                  className="rounded-xl border-slate-200 h-12 focus-visible:ring-indigo-600 font-medium font-mono"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="stock" className="text-xs font-bold uppercase tracking-wider text-slate-500">Stok Barang</Label>
+                  <Input 
+                    id="stock" 
+                    type="number"
+                    value={formData.stock} 
+                    onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })} 
+                    placeholder="0"
+                    className="rounded-xl border-slate-200 h-12 focus-visible:ring-indigo-600 font-medium font-mono"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="satuan" className="text-xs font-bold uppercase tracking-wider text-slate-500">Satuan</Label>
+                  <Input 
+                    id="satuan" 
+                    value={formData.satuan || ''} 
+                    onChange={(e) => setFormData({ ...formData, satuan: e.target.value })} 
+                    placeholder="Contoh: Pcs, Box, Kg"
+                    className="rounded-xl border-slate-200 h-12 focus-visible:ring-indigo-600 font-medium"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -411,7 +439,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
             <DialogHeader>
               <DialogTitle className="text-2xl font-black text-slate-800">Tambah Stok</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-6">
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-2 -mr-2 scrollbar-thin">
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Produk</span>
@@ -419,7 +447,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stok Saat Ini</span>
-                  <span className="text-sm font-mono font-bold text-slate-800">{productToAddStock?.stock}</span>
+                  <span className="text-sm font-mono font-bold text-slate-800">{productToAddStock?.stock} {productToAddStock?.satuan || 'Pcs'}</span>
                 </div>
               </div>
               
@@ -470,7 +498,7 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
                 <div className="flex justify-between items-center pt-2 border-t border-indigo-100">
                   <span className="text-xs font-medium text-slate-500">Total Stok Setelahnya:</span>
                   <span className="text-lg font-black text-indigo-600 font-mono">
-                    {(productToAddStock?.stock || 0) + addStockAmount}
+                    {Number(((productToAddStock?.stock || 0) + addStockAmount).toFixed(4))} {productToAddStock?.satuan || 'Pcs'}
                   </span>
                 </div>
               </div>
@@ -479,6 +507,36 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
               <Button variant="outline" onClick={() => setIsAddStockDialogOpen(false)} className="rounded-xl h-12 font-bold flex-1 border-slate-200">Batal</Button>
               <Button onClick={confirmUpdateStock} className="rounded-xl bg-slate-900 hover:bg-black h-12 font-bold flex-1">Simpan Stok</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Scanner Dialog */}
+        <Dialog open={showScanner} onOpenChange={setShowScanner}>
+          <DialogContent className="sm:max-w-[425px] rounded-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <Camera className="w-5 h-5 text-indigo-600" />
+                Scan Barcode
+              </DialogTitle>
+              <DialogDescription>
+                Arahkan kamera ke barcode untuk mengisi kolom secara otomatis.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4">
+              {showScanner && (
+                <BarcodeScanner 
+                  onScan={(code) => {
+                    setFormData({ ...formData, barcode: code });
+                    setShowScanner(false);
+                    toast.success('Barcode berhasil dipindai');
+                  }} 
+                  onError={(err) => {
+                    console.debug('Scanner issue:', err);
+                  }} 
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </Card>

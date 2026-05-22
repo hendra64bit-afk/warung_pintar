@@ -32,38 +32,64 @@ const DEFAULT_PRODUCTS: Product[] = [
   { id: '5', name: 'Gorengan (Bakwan)', costPrice: 1000, price: 2000, category: 'Snack', stock: 200 },
 ];
 
+const getStoreKey = (baseKey: string) => {
+  const storeId = storage.getActiveStoreId();
+  return storeId ? `${storeId}-${baseKey}` : baseKey;
+};
+
 export const storage = {
+  getRecentStores: (): string[] => {
+    const data = localStorage.getItem('warung-pintar-recent-stores');
+    return data ? JSON.parse(data) : [];
+  },
+  addRecentStore: (storeId: string) => {
+    const stores = storage.getRecentStores();
+    if (!stores.includes(storeId)) {
+      stores.push(storeId);
+      localStorage.setItem('warung-pintar-recent-stores', JSON.stringify(stores));
+    }
+  },
+  getActiveStoreId: (): string | null => {
+    return localStorage.getItem('warung-pintar-active-store-id');
+  },
+  setActiveStoreId: (storeId: string | null) => {
+    if (storeId) {
+      localStorage.setItem('warung-pintar-active-store-id', storeId);
+    } else {
+      localStorage.removeItem('warung-pintar-active-store-id');
+    }
+  },
   getProducts: (): Product[] => {
-    const data = localStorage.getItem(PRODUCTS_KEY);
+    const data = localStorage.getItem(getStoreKey(PRODUCTS_KEY));
     return data ? JSON.parse(data) : DEFAULT_PRODUCTS;
   },
   saveProducts: (products: Product[]) => {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+    localStorage.setItem(getStoreKey(PRODUCTS_KEY), JSON.stringify(products));
   },
   getTransactions: (): Transaction[] => {
-    const data = localStorage.getItem(TRANSACTIONS_KEY);
+    const data = localStorage.getItem(getStoreKey(TRANSACTIONS_KEY));
     return data ? JSON.parse(data) : [];
   },
   saveTransaction: (transaction: Transaction) => {
     const transactions = storage.getTransactions();
-    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([transaction, ...transactions]));
+    localStorage.setItem(getStoreKey(TRANSACTIONS_KEY), JSON.stringify([transaction, ...transactions]));
   },
   saveTransactions: (transactions: Transaction[]) => {
-    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
+    localStorage.setItem(getStoreKey(TRANSACTIONS_KEY), JSON.stringify(transactions));
   },
   clearTransactions: () => {
-    localStorage.removeItem(TRANSACTIONS_KEY);
+    localStorage.removeItem(getStoreKey(TRANSACTIONS_KEY));
   },
   getPurchases: (): PurchaseRecord[] => {
-    const data = localStorage.getItem(PURCHASES_KEY);
+    const data = localStorage.getItem(getStoreKey(PURCHASES_KEY));
     return data ? JSON.parse(data) : [];
   },
   savePurchase: (purchase: PurchaseRecord) => {
     const purchases = storage.getPurchases();
-    localStorage.setItem(PURCHASES_KEY, JSON.stringify([purchase, ...purchases]));
+    localStorage.setItem(getStoreKey(PURCHASES_KEY), JSON.stringify([purchase, ...purchases]));
   },
   savePurchases: (purchases: PurchaseRecord[]) => {
-    localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+    localStorage.setItem(getStoreKey(PURCHASES_KEY), JSON.stringify(purchases));
   },
   exportData: () => {
     return {
@@ -75,7 +101,7 @@ export const storage = {
   },
   importData: (data: { products: Product[], transactions: Transaction[], purchases: PurchaseRecord[], storeName?: string }) => {
     if (data.products) storage.saveProducts(data.products);
-    if (data.transactions) localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(data.transactions));
+    if (data.transactions) localStorage.setItem(getStoreKey(TRANSACTIONS_KEY), JSON.stringify(data.transactions));
     if (data.purchases) storage.savePurchases(data.purchases);
     if (data.storeName) storage.setStoreName(data.storeName);
   },
@@ -90,19 +116,20 @@ export const storage = {
     }
   },
   getStoreName: (): string => {
-    return localStorage.getItem(STORE_NAME_KEY) || DEFAULT_STORE_NAME;
+    return localStorage.getItem(getStoreKey(STORE_NAME_KEY)) || DEFAULT_STORE_NAME;
   },
   setStoreName: (name: string) => {
-    localStorage.setItem(STORE_NAME_KEY, name);
+    localStorage.setItem(getStoreKey(STORE_NAME_KEY), name);
   },
   getUsers: (): User[] => {
-    const data = localStorage.getItem(USERS_KEY);
+    const data = localStorage.getItem(getStoreKey(USERS_KEY));
     return data ? JSON.parse(data) : DEFAULT_USERS;
   },
   saveUsers: (users: User[]) => {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    localStorage.setItem(getStoreKey(USERS_KEY), JSON.stringify(users));
   },
-  login: (username: string, password: string): User | null => {
+  login: (storeId: string, username: string, password: string): User | null => {
+    storage.setActiveStoreId(storeId);
     const users = storage.getUsers();
     const user = users.find(u => u.username === username && u.password === password);
     if (user) {
@@ -110,6 +137,8 @@ export const storage = {
       const { password: _, ...userWithoutPassword } = user;
       return userWithoutPassword as User;
     }
+    // If login failed, remove active store id
+    storage.setActiveStoreId(null);
     return null;
   }
 };

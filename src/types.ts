@@ -13,6 +13,7 @@ export interface Product {
   barcode?: string;
   image?: string;
   purchaseDate?: string;
+  satuan?: string;
 }
 
 export interface CartItem extends Product {

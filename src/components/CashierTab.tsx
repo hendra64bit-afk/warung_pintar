@@ -3,18 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus, Minus, Trash2, CreditCard, Eraser, Package, ShoppingCart, Barcode, QrCode } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, CreditCard, Eraser, Package, ShoppingCart, Barcode, QrCode, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import { Product, CartItem, Transaction } from '@/src/types';
 import { formatCurrency } from '@/src/lib/format';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import BarcodeScanner from './BarcodeScanner';
 
 import { toast } from 'sonner';
 
@@ -26,11 +27,74 @@ interface CashierTabProps {
   onComplete: (transaction: Transaction) => void;
 }
 
+function QuantityInput({ 
+  item, 
+  updateQuantity, 
+  handleQuantityChange, 
+  handleQuantityBlur 
+}: { 
+  item: any, 
+  updateQuantity: (id: string, delta: number) => void,
+  handleQuantityChange: (id: string, qty: number) => void,
+  handleQuantityBlur: () => void
+}) {
+  const [localVal, setLocalVal] = useState(item.quantity.toString());
+
+  useEffect(() => {
+    // Sync external changes (e.g., from "+/1" buttons)
+    if (parseFloat(localVal) !== item.quantity && localVal !== item.quantity.toString() + '.') {
+      setLocalVal(item.quantity.toString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.quantity]);
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(',', '.'); // Allow comma as decimal separator too
+    if (/^\d*\.?\d*$/.test(val)) {
+      setLocalVal(val);
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed) && parsed >= 0) {
+        handleQuantityChange(item.id, parsed);
+      }
+    }
+  };
+
+  const onBlur = () => {
+    const parsed = parseFloat(localVal);
+    if (isNaN(parsed) || parsed <= 0) {
+      handleQuantityChange(item.id, 0); // Force zero first
+      handleQuantityBlur();
+    } else {
+      setLocalVal(parsed.toString()); // Clean up ending dot if any
+    }
+  };
+
+  return (
+    <div className="flex items-center bg-slate-100 rounded-lg p-1">
+      <button onClick={() => updateQuantity(item.id, -1)} className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-slate-500 hover:shadow-sm transition-all focus:outline-none">
+        <Minus className="w-3 h-3" />
+      </button>
+      <input 
+        type="text" 
+        inputMode="decimal"
+        value={localVal} 
+        onChange={onChange}
+        onBlur={onBlur}
+        className="w-10 bg-transparent text-center font-bold text-slate-800 text-xs border-none focus:ring-0 p-0 outline-none"
+      />
+      <button onClick={() => updateQuantity(item.id, 1)} className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-slate-500 hover:shadow-sm transition-all focus:outline-none">
+        <Plus className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
 export default function CashierTab({ products, transactions, cart, setCart, onComplete }: CashierTabProps) {
   const [search, setSearch] = useState('');
   const [barcodeSearch, setBarcodeSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('Semua');
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [paidAmount, setPaidAmount] = useState<number | ''>('');
   const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountValue, setDiscountValue] = useState<number>(0);
@@ -81,12 +145,17 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
     e.preventDefault();
     if (!barcodeSearch) return;
 
-    const product = products.find(p => p.barcode === barcodeSearch);
+    handleScan(barcodeSearch);
+  };
+
+  const handleScan = (code: string) => {
+    const product = products.find(p => p.barcode === code);
     if (product) {
       addToCart(product);
       setBarcodeSearch('');
+      setShowScanner(false);
     } else {
-      toast.error(`Produk dengan barcode ${barcodeSearch} tidak ditemukan`);
+      toast.error(`Produk dengan barcode ${code} tidak ditemukan`);
       setBarcodeSearch('');
     }
   };
@@ -106,6 +175,26 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
         return item;
       }).filter(item => item.quantity > 0);
     });
+  };
+
+  const handleQuantityChange = (id: string, parsedQty: number) => {
+    const product = products.find(p => p.id === id);
+    setCart(prev => {
+      return prev.map(item => {
+        if (item.id === id) {
+          if (parsedQty > (product?.stock || 0)) {
+            toast.error('Stok tidak mencukupi');
+            return { ...item, quantity: product?.stock || 0 };
+          }
+          return { ...item, quantity: parsedQty };
+        }
+        return item;
+      });
+    });
+  };
+
+  const handleQuantityBlur = () => {
+    setCart(prev => prev.filter(item => item.quantity > 0));
   };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -147,17 +236,25 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
       <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
         {/* Search & Filter Bar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-          <form onSubmit={handleBarcodeSearch} className="flex bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 w-full md:w-64 group focus-within:ring-2 focus-within:ring-indigo-600 transition-all">
-            <Barcode className="w-5 h-5 text-indigo-400 mr-2 group-focus-within:text-indigo-600" />
-            <input 
-              type="text" 
-              placeholder="Scan Barcode..." 
-              className="bg-transparent border-none outline-none text-sm w-full text-indigo-900 placeholder:text-indigo-300 h-6 font-mono"
-              value={barcodeSearch}
-              onChange={(e) => setBarcodeSearch(e.target.value)}
-              autoFocus
-            />
-          </form>
+          <div className="flex gap-2 w-full md:w-auto overflow-hidden">
+            <form onSubmit={handleBarcodeSearch} className="flex-1 flex bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 min-w-0 group focus-within:ring-2 focus-within:ring-indigo-600 transition-all">
+              <Barcode className="w-5 h-5 text-indigo-400 mr-2 group-focus-within:text-indigo-600 shrink-0" />
+              <input 
+                type="text" 
+                placeholder="Scan Barcode manual..." 
+                className="bg-transparent border-none outline-none text-sm w-full text-indigo-900 placeholder:text-indigo-300 h-6 font-mono min-w-[130px]"
+                value={barcodeSearch}
+                onChange={(e) => setBarcodeSearch(e.target.value)}
+              />
+            </form>
+            <button 
+              onClick={() => setShowScanner(true)}
+              className="px-3 py-2 bg-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-200 transition-colors shrink-0 flex items-center justify-center border border-indigo-200"
+              title="Gunakan Kamera Kamera Device"
+            >
+              <Camera className="w-5 h-5" />
+            </button>
+          </div>
           <div className="flex-1 flex bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 w-full">
             <Search className="w-5 h-5 text-slate-400 mr-2" />
             <input 
@@ -271,23 +368,21 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
             <div className="space-y-4">
               {cart.map(item => (
                 <div key={item.id} className="flex items-center gap-3 group animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center font-bold text-slate-600 text-xs">
-                    {item.quantity}x
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-bold text-slate-800 line-clamp-1">{item.name}</h4>
+                  <QuantityInput 
+                    item={item} 
+                    updateQuantity={updateQuantity} 
+                    handleQuantityChange={handleQuantityChange} 
+                    handleQuantityBlur={handleQuantityBlur} 
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-slate-800 truncate">{item.name}</h4>
                     <p className="text-[10px] text-slate-400 uppercase font-bold">{item.category}</p>
                   </div>
-                  <div className="flex flex-col items-end">
+                  <div className="flex flex-col items-end shrink-0">
                     <p className="text-sm font-bold text-slate-800 font-mono">{formatCurrency(item.price * item.quantity)}</p>
-                    <div className="flex gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="w-5 h-5 bg-slate-100 rounded flex items-center justify-center hover:bg-slate-200">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="w-5 h-5 bg-slate-100 rounded flex items-center justify-center hover:bg-slate-200">
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))} className="text-[10px] text-rose-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity hover:underline">
+                      Hapus
+                    </button>
                   </div>
                 </div>
               ))}
@@ -430,6 +525,33 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
               Simpan & Selesai
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Scanner Dialog */}
+      <Dialog open={showScanner} onOpenChange={setShowScanner}>
+        <DialogContent className="sm:max-w-[425px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Camera className="w-5 h-5 text-indigo-600" />
+              Scan Barcode Produk
+            </DialogTitle>
+            <DialogDescription>
+              Arahkan kamera ke barcode produk untuk menambahkannya ke keranjang secara otomatis.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {showScanner && (
+              <BarcodeScanner 
+                onScan={handleScan} 
+                onError={(err) => {
+                  // Only log if it's a critical error (ignore common frame drops)
+                  console.debug('Scanner issue:', err);
+                }} 
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
