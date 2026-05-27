@@ -13,7 +13,7 @@ import {
   writeBatch 
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from './firebase';
-import { Product, Transaction, PurchaseRecord, User } from '../types';
+import { Product, Transaction, PurchaseRecord, User, CashLog, ExpenseRecord } from '../types';
 import { storage } from './storage';
 
 export const getTenantPath = (collectionName: string) => {
@@ -208,5 +208,57 @@ export async function syncAllBackupDataToCloud(data: {
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, 'bulk-restore-sync');
+  }
+}
+
+/**
+ * Menyimpan rekaman cash log (kas masuk/keluar) ke Firestore Cloud
+ */
+export async function saveCashLogToCloud(cashLog: CashLog) {
+  await signInAnonymouslyIfNeeded();
+  const path = `${getTenantPath('cashlogs')}/${cashLog.id}`;
+  try {
+    await setDoc(getTenantDoc('cashlogs', cashLog.id), cashLog);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+/**
+ * Menghapus rekaman cash log dari Firestore Cloud
+ */
+export async function deleteCashLogFromCloud(cashLogId: string) {
+  await signInAnonymouslyIfNeeded();
+  const path = `${getTenantPath('cashlogs')}/${cashLogId}`;
+  try {
+    await deleteDoc(getTenantDoc('cashlogs', cashLogId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+/**
+ * Menyimpan rekaman pengeluaran beban sediaan/operasional ke Firestore Cloud
+ */
+export async function saveExpenseToCloud(expense: ExpenseRecord) {
+  await signInAnonymouslyIfNeeded();
+  const path = `${getTenantPath('expenses')}/${expense.id}`;
+  try {
+    await setDoc(getTenantDoc('expenses', expense.id), expense);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+/**
+ * Menghapus rekaman pengeluaran beban dari Firestore Cloud
+ */
+export async function deleteExpenseFromCloud(expenseId: string) {
+  await signInAnonymouslyIfNeeded();
+  const path = `${getTenantPath('expenses')}/${expenseId}`;
+  try {
+    await deleteDoc(getTenantDoc('expenses', expenseId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
   }
 }

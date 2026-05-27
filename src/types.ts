@@ -32,6 +32,29 @@ export interface Transaction {
   change: number;
   timestamp: number;
   status?: 'completed' | 'returned';
+  paymentMethod?: 'tunai' | 'transfer';
+}
+
+export interface CashLog {
+  id: string;
+  type: 'masuk' | 'keluar';
+  source: 'penjualan' | 'retur' | 'modal' | 'penarikan';
+  amount: number;
+  description: string;
+  timestamp: number;
+  operatorId: string;
+  operatorName: string;
+  relatedId?: string;
+}
+
+export interface ExpenseRecord {
+  id: string;
+  name: string;
+  amount: number;
+  date: string;
+  timestamp: number;
+  operatorId: string;
+  operatorName: string;
 }
 
 export interface PurchaseRecord {

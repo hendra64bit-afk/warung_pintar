@@ -98,6 +98,7 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
   const [paidAmount, setPaidAmount] = useState<number | ''>('');
   const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountValue, setDiscountValue] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<'tunai' | 'transfer'>('tunai');
 
   const categories = useMemo(() => {
     const cats = Array.from(new Set(products.map(p => p.category)));
@@ -222,12 +223,14 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
       paidAmount,
       change,
       timestamp: Date.now(),
+      paymentMethod,
     };
 
     onComplete(transaction);
     setShowCheckout(false);
     setPaidAmount('');
     setDiscountValue(0);
+    setPaymentMethod('tunai');
   };
 
   return (
@@ -443,12 +446,28 @@ export default function CashierTab({ products, transactions, cart, setCart, onCo
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <button className="flex flex-col items-center justify-center py-3 border border-blue-200 rounded-2xl bg-white text-blue-600 font-semibold hover:bg-blue-50/50 transition-colors shadow-sm active:scale-95 text-[10px] uppercase tracking-wider">
-              <CreditCard className="w-4 h-4 mb-1 text-blue-500" />
+            <button 
+              type="button"
+              onClick={() => setPaymentMethod('transfer')}
+              className={`flex flex-col items-center justify-center py-3 border rounded-2xl font-bold transition-all shadow-sm active:scale-95 text-[10px] uppercase tracking-wider ${
+                paymentMethod === 'transfer' 
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100' 
+                  : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50/50'
+              }`}
+            >
+              <CreditCard className={`w-4 h-4 mb-1 ${paymentMethod === 'transfer' ? 'text-white' : 'text-blue-400'}`} />
               <span>TRANSFER</span>
             </button>
-            <button className="flex flex-col items-center justify-center py-3 border border-purple-200 rounded-2xl bg-white text-purple-600 font-semibold hover:bg-purple-50/50 transition-colors shadow-sm active:scale-95 text-[10px] uppercase tracking-wider">
-              <CreditCard className="w-4 h-4 mb-1 text-purple-500" />
+            <button 
+              type="button"
+              onClick={() => setPaymentMethod('tunai')}
+              className={`flex flex-col items-center justify-center py-3 border rounded-2xl font-bold transition-all shadow-sm active:scale-95 text-[10px] uppercase tracking-wider ${
+                paymentMethod === 'tunai' 
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-100' 
+                  : 'bg-white text-purple-600 border-purple-200 hover:bg-purple-50/50'
+              }`}
+            >
+              <CreditCard className={`w-4 h-4 mb-1 ${paymentMethod === 'tunai' ? 'text-white' : 'text-purple-400'}`} />
               <span>TUNAI</span>
             </button>
           </div>

@@ -47,7 +47,8 @@
         "paidAmount": { "type": "number" },
         "change": { "type": "number" },
         "timestamp": { "type": "number" },
-        "status": { "type": "string", "enum": ["completed", "returned"] }
+        "status": { "type": "string", "enum": ["completed", "returned"] },
+        "paymentMethod": { "type": "string", "enum": ["tunai", "transfer"] }
       },
       "required": ["id", "items", "subtotal", "total", "paidAmount", "change", "timestamp"]
     },
@@ -89,6 +90,38 @@
         "storeName": { "type": "string" }
       },
       "required": ["storeName"]
+    },
+    "CashLog": {
+      "title": "CashLog",
+      "description": "Cash in/out transaction log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["masuk", "keluar"] },
+        "source": { "type": "string", "enum": ["penjualan", "retur", "modal", "penarikan"] },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "operatorId": { "type": "string" },
+        "operatorName": { "type": "string" },
+        "relatedId": { "type": "string" }
+      },
+      "required": ["id", "type", "source", "amount", "description", "timestamp", "operatorId", "operatorName"]
+    },
+    "ExpenseRecord": {
+      "title": "ExpenseRecord",
+      "description": "Operational expense record (beban) managed by admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "operatorId": { "type": "string" },
+        "operatorName": { "type": "string" }
+      },
+      "required": ["id", "name", "amount", "date", "timestamp", "operatorId", "operatorName"]
     }
   },
   "firestore": {
@@ -111,6 +144,14 @@
     "/settings/{settingId}": {
       "schema": "StoreSettings",
       "description": "Warung general configurations"
+    },
+    "/cashlogs/{cashlogId}": {
+      "schema": "CashLog",
+      "description": "Log of physical cash in and cash out"
+    },
+    "/expenses/{expenseId}": {
+      "schema": "ExpenseRecord",
+      "description": "Operational expense records (beban) managed by admin"
     }
   }
 }

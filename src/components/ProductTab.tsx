@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Package, PlusCircle, Camera } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, PlusCircle, Camera, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Product, PurchaseRecord } from '@/src/types';
 import { formatCurrency } from '@/src/lib/format';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -35,6 +35,34 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
   const [addStockPrice, setAddStockPrice] = useState<number>(0);
   const [addStockDate, setAddStockDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [formData, setFormData] = useState<Partial<Product>>({});
+
+  // Search, Filter & Pagination states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const categories = useMemo(() => {
+    return ['Semua', ...Array.from(new Set(products.map(p => p.category)))];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (p.barcode && p.barcode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            p.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'Semua' || p.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchTerm, selectedCategory]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const adjustedCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (adjustedCurrentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProducts, adjustedCurrentPage, itemsPerPage]);
 
   const handleAdd = () => {
     setEditingProduct(null);
@@ -194,18 +222,77 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
       </div>
 
       <Card className="border-slate-200 shadow-sm rounded-2xl bg-white overflow-hidden border">
-        <CardHeader className="flex flex-row items-center justify-between border-b bg-slate-50/50 py-6 px-8">
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between border-b bg-slate-50/50 py-6 px-8 gap-4">
           <div>
             <CardTitle className="text-xl font-bold text-slate-800">Manajemen Produk</CardTitle>
             <p className="text-slate-500 text-sm mt-1">Daftar item yang tersedia di toko</p>
           </div>
-          {isAdmin && (
-            <Button onClick={handleAdd} className="rounded-xl flex items-center gap-2 bg-slate-900 hover:bg-black font-bold text-xs uppercase tracking-wider h-10 px-6">
-              <Plus className="w-4 h-4" />
-              Produk Baru
-            </Button>
-          )}
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full md:w-auto">
+            {/* Search Input */}
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Cari nama / barcode..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-9 pr-4 rounded-xl border-slate-200 h-10 focus-visible:ring-indigo-600 font-medium text-xs text-slate-700 w-full"
+              />
+            </div>
+            {isAdmin && (
+              <Button onClick={handleAdd} className="rounded-xl flex items-center gap-2 bg-slate-900 hover:bg-black font-bold text-xs uppercase tracking-wider h-10 px-6 shrink-0 justify-center">
+                <Plus className="w-4 h-4" />
+                Produk Baru
+              </Button>
+            )}
+          </div>
         </CardHeader>
+
+        {/* Filters and Items per Page controls */}
+        <div className="px-8 py-4 bg-slate-50/30 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar py-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Grup:</span>
+            <div className="flex bg-slate-100/80 border border-slate-200/60 rounded-xl p-0.5 gap-0.5 max-w-full overflow-x-auto no-scrollbar shrink-0">
+              {categories.slice(0, 7).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                    selectedCategory === cat
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm min-w-fit shrink-0 ml-auto sm:ml-0">
+            <span className="text-[10px] uppercase tracking-wider text-slate-400">Tampilkan:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="bg-transparent border-none focus:ring-0 p-0 pr-6 text-xs text-slate-700 font-extrabold uppercase cursor-pointer outline-none"
+            >
+              <option value={5}>5 Baris</option>
+              <option value={10}>10 Baris</option>
+              <option value={20}>20 Baris</option>
+              <option value={50}>50 Baris</option>
+            </select>
+          </div>
+        </div>
+
         <CardContent className="p-0">
           <Table>
             <TableHeader className="bg-slate-50/80">
@@ -223,57 +310,122 @@ export default function ProductTab({ products, onUpdateProducts, onAddPurchase, 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id} className="hover:bg-slate-100/50 transition-colors border-slate-100">
-                  <TableCell className="pl-8">
-                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                      {product.image ? (
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <Package className="w-5 h-5 text-slate-400" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-bold text-slate-900">{product.name}</TableCell>
-                  <TableCell className="text-xs font-mono text-slate-400">{product.barcode || '-'}</TableCell>
-                  <TableCell className="text-xs text-slate-500 font-medium">{product.purchaseDate || '-'}</TableCell>
-                  <TableCell>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
-                      {product.category}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className={`font-mono font-bold ${product.stock <= 5 ? 'text-rose-600' : 'text-slate-700'}`}>
-                      {product.stock} {product.satuan || 'Pcs'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right font-mono font-medium text-slate-500">{formatCurrency(product.costPrice)}</TableCell>
-                  <TableCell className="text-right font-mono font-bold text-slate-900">{formatCurrency(product.price)}</TableCell>
-                  <TableCell className="text-right font-mono font-bold text-emerald-600">
-                    {formatCurrency(product.price - product.costPrice)}
-                  </TableCell>
-                  <TableCell className="text-right pr-8">
-                    {isAdmin ? (
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenAddStock(product)} title="Tambah Stok" className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50">
-                          <PlusCircle className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} className="text-slate-400 hover:text-blue-600 hover:bg-blue-50/50">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(product)} className="text-slate-400 hover:text-destructive hover:bg-rose-50">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-[10px] font-bold text-slate-300 uppercase italic">View Only</span>
-                    )}
+              {paginatedProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="h-60 text-center text-slate-400 italic font-medium">
+                    {products.length === 0 ? 'Belum ada produk terdaftar' : 'Tidak ada produk yang cocok dengan kriteria pencarian'}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                paginatedProducts.map((product) => (
+                  <TableRow key={product.id} className="hover:bg-slate-100/50 transition-colors border-slate-100">
+                    <TableCell className="pl-8">
+                      <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        {product.image ? (
+                          <img src={product.image} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <Package className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-slate-900">{product.name}</TableCell>
+                    <TableCell className="text-xs font-mono text-slate-400">{product.barcode || '-'}</TableCell>
+                    <TableCell className="text-xs text-slate-500 font-medium">{product.purchaseDate || '-'}</TableCell>
+                    <TableCell>
+                      <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 border border-slate-200">
+                        {product.category}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span className={`font-mono font-bold ${product.stock <= 5 ? 'text-rose-600' : 'text-slate-700'}`}>
+                        {product.stock} {product.satuan || 'Pcs'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium text-slate-500">{formatCurrency(product.costPrice)}</TableCell>
+                    <TableCell className="text-right font-mono font-bold text-slate-900">{formatCurrency(product.price)}</TableCell>
+                    <TableCell className="text-right font-mono font-bold text-emerald-600">
+                      {formatCurrency(product.price - product.costPrice)}
+                    </TableCell>
+                    <TableCell className="text-right pr-8">
+                      {isAdmin ? (
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenAddStock(product)} title="Tambah Stok" className="text-slate-400 hover:text-emerald-600 hover:bg-emerald-50">
+                            <PlusCircle className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} className="text-slate-400 hover:text-blue-600 hover:bg-blue-50/50">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(product)} className="text-slate-400 hover:text-destructive hover:bg-rose-50">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-300 uppercase italic">View Only</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
+
+        {/* Pagination Navigation Footer */}
+        {filteredProducts.length > 0 && (
+          <div className="px-8 py-5 border-t border-slate-100 bg-slate-50/30 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <p className="text-slate-500 text-xs font-semibold">
+              Menampilkan <span className="font-bold text-slate-800">{(adjustedCurrentPage - 1) * itemsPerPage + 1}</span> sampai{' '}
+              <span className="font-bold text-slate-800">{Math.min(filteredProducts.length, adjustedCurrentPage * itemsPerPage)}</span> dari{' '}
+              <span className="font-bold text-slate-800">{filteredProducts.length}</span> produk
+              {searchTerm && <span className="text-slate-400"> (difilter dari {products.length})</span>}
+            </p>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={adjustedCurrentPage === 1}
+                className="rounded-xl h-9 w-9 p-0 flex items-center justify-center border-slate-200"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => page === 1 || page === totalPages || Math.abs(page - adjustedCurrentPage) <= 1)
+                .map((page, index, arr) => {
+                  const isGap = index > 0 && page - arr[index - 1] > 1;
+                  return (
+                    <React.Fragment key={page}>
+                      {isGap && <span className="text-slate-300 px-1 font-bold text-sm">...</span>}
+                      <Button
+                        variant={adjustedCurrentPage === page ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className={`rounded-xl h-9 min-w-9 px-2.5 text-xs font-black transition-all ${
+                          adjustedCurrentPage === page
+                            ? 'bg-slate-900 text-white shadow-sm hover:bg-black'
+                            : 'border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                        }`}
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  );
+                })}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={adjustedCurrentPage === totalPages}
+                className="rounded-xl h-9 w-9 p-0 flex items-center justify-center border-slate-200"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="rounded-3xl border-none shadow-2xl">

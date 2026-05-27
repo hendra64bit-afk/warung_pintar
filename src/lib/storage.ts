@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Product, Transaction, PurchaseRecord, User } from '../types';
+import { Product, Transaction, PurchaseRecord, User, CashLog, ExpenseRecord } from '../types';
 
 const PRODUCTS_KEY = 'warung-pintar-products';
 const TRANSACTIONS_KEY = 'warung-pintar-transactions';
@@ -11,6 +11,8 @@ const PURCHASES_KEY = 'warung-pintar-purchases';
 const PASSWORD_KEY = 'warung-pintar-password';
 const STORE_NAME_KEY = 'warung-pintar-store-name';
 const USERS_KEY = 'warung-pintar-users';
+const CASH_LOGS_KEY = 'warung-pintar-cashlogs';
+const EXPENSES_KEY = 'warung-pintar-expenses';
 
 const DEFAULT_USERS: User[] = [
   {
@@ -90,6 +92,34 @@ export const storage = {
   },
   savePurchases: (purchases: PurchaseRecord[]) => {
     localStorage.setItem(getStoreKey(PURCHASES_KEY), JSON.stringify(purchases));
+  },
+  getCashLogs: (): CashLog[] => {
+    const data = localStorage.getItem(getStoreKey(CASH_LOGS_KEY));
+    return data ? JSON.parse(data) : [];
+  },
+  saveCashLog: (cashLog: CashLog) => {
+    const logs = storage.getCashLogs();
+    localStorage.setItem(getStoreKey(CASH_LOGS_KEY), JSON.stringify([cashLog, ...logs]));
+  },
+  saveCashLogs: (cashLogs: CashLog[]) => {
+    localStorage.setItem(getStoreKey(CASH_LOGS_KEY), JSON.stringify(cashLogs));
+  },
+  clearCashLogs: () => {
+    localStorage.removeItem(getStoreKey(CASH_LOGS_KEY));
+  },
+  getExpenses: (): ExpenseRecord[] => {
+    const data = localStorage.getItem(getStoreKey(EXPENSES_KEY));
+    return data ? JSON.parse(data) : [];
+  },
+  saveExpense: (expense: ExpenseRecord) => {
+    const expenses = storage.getExpenses();
+    localStorage.setItem(getStoreKey(EXPENSES_KEY), JSON.stringify([expense, ...expenses]));
+  },
+  saveExpenses: (expenses: ExpenseRecord[]) => {
+    localStorage.setItem(getStoreKey(EXPENSES_KEY), JSON.stringify(expenses));
+  },
+  clearExpenses: () => {
+    localStorage.removeItem(getStoreKey(EXPENSES_KEY));
   },
   exportData: () => {
     return {

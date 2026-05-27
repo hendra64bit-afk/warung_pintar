@@ -5,12 +5,13 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Package, History as HistoryIcon, BarChart3, LogOut, ArrowDownRight, Settings, User as UserIcon, Sparkles } from 'lucide-react';
+import { ShoppingCart, Package, History as HistoryIcon, BarChart3, LogOut, ArrowDownRight, Settings, User as UserIcon, Sparkles, Wallet } from 'lucide-react';
 import { storage } from '@/src/lib/storage';
-import { Product, CartItem, Transaction, PurchaseRecord, User } from '@/src/types';
+import { Product, CartItem, Transaction, PurchaseRecord, User, CashLog, ExpenseRecord } from '@/src/types';
 import CashierTab from './CashierTab';
 import ProductTab from './ProductTab';
 import HistoryTab from './HistoryTab';
+import CashTab from './CashTab';
 import ReportTab from './ReportTab';
 import PurchaseHistoryTab from './PurchaseHistoryTab';
 import SettingsTab from './SettingsTab';
@@ -32,7 +33,11 @@ import {
   deletePurchaseFromCloud,
   saveStoreNameCloud,
   getTenantCollection,
-  getTenantDoc
+  getTenantDoc,
+  saveCashLogToCloud,
+  deleteCashLogFromCloud,
+  saveExpenseToCloud,
+  deleteExpenseFromCloud
 } from '@/src/lib/firestoreSync';
 
 interface PosAppProps {
@@ -47,6 +52,8 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [storeNameState, setStoreNameState] = useState(storage.getStoreName());
   const [dbConnected, setDbConnected] = useState<boolean>(navigator.onLine);
+  const [cashLogs, setCashLogs] = useState<CashLog[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
 
   const isAdmin = currentUser.role === 'admin';
 
@@ -68,6 +75,8 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
     setProducts(storage.getProducts());
     setTransactions(storage.getTransactions());
     setPurchases(storage.getPurchases());
+    setCashLogs(storage.getCashLogs());
+    setExpenses(storage.getExpenses());
 
     // 2. Inisiasi proses sinkronisasi real-time dengan cloud Firestore
     let unsubProducts: () => void;
@@ -75,6 +84,8 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
     let unsubPurchases: () => void;
     let unsubSettings: () => void;
     let unsubUsers: () => void;
+    let unsubCashLogs: () => void;
+    let unsubExpenses: () => void;
 
     const startSync = async () => {
       try {
@@ -168,6 +179,36 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
           setDbConnected(false);
           try { handleFirestoreError(error, OperationType.GET, 'users'); } catch (e) { console.error('Error fetching users', e); }
         });
+
+        // Real-time listener cash logs
+        unsubCashLogs = onSnapshot(getTenantCollection('cashlogs'), (snapshot) => {
+          setDbConnected(true);
+          const cloudLogs: CashLog[] = [];
+          snapshot.forEach((doc) => {
+            cloudLogs.push(doc.data() as CashLog);
+          });
+          cloudLogs.sort((a, b) => b.timestamp - a.timestamp);
+          setCashLogs(cloudLogs);
+          storage.saveCashLogs(cloudLogs);
+        }, (error) => {
+          setDbConnected(false);
+          try { handleFirestoreError(error, OperationType.GET, 'cashlogs'); } catch (e) { console.error('Error fetching cash logs', e); }
+        });
+
+        // Real-time listener operational expenses (beban)
+        unsubExpenses = onSnapshot(getTenantCollection('expenses'), (snapshot) => {
+          setDbConnected(true);
+          const cloudExpenses: ExpenseRecord[] = [];
+          snapshot.forEach((doc) => {
+            cloudExpenses.push(doc.data() as ExpenseRecord);
+          });
+          cloudExpenses.sort((a, b) => b.timestamp - a.timestamp);
+          setExpenses(cloudExpenses);
+          storage.saveExpenses(cloudExpenses);
+        }, (error) => {
+          setDbConnected(false);
+          try { handleFirestoreError(error, OperationType.GET, 'expenses'); } catch (e) { console.error('Error fetching expenses', e); }
+        });
       } catch (err) {
         console.warn('[Firebase Sync Error] Tidak dapat melakukan inisialisasi sync:', err);
       }
@@ -181,6 +222,8 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
       if (unsubPurchases) unsubPurchases();
       if (unsubSettings) unsubSettings();
       if (unsubUsers) unsubUsers();
+      if (unsubCashLogs) unsubCashLogs();
+      if (unsubExpenses) unsubExpenses();
     };
   }, []);
 
@@ -262,6 +305,24 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
       }
       return p;
     });
+    
+    // Record Cash In if payment method is TUNAI
+    if (transaction.paymentMethod === 'tunai' || !transaction.paymentMethod) {
+      const cashLog: CashLog = {
+        id: 'cash_' + Math.random().toString(36).substr(2, 9),
+        type: 'masuk',
+        source: 'penjualan',
+        amount: transaction.total,
+        description: `Penjualan #${transaction.id}`,
+        timestamp: Date.now(),
+        operatorId: currentUser.id,
+        operatorName: currentUser.name,
+        relatedId: transaction.id
+      };
+      setCashLogs(prev => [cashLog, ...prev]);
+      storage.saveCashLog(cashLog);
+      await saveCashLogToCloud(cashLog);
+    }
     
     await handleUpdateProducts(updatedProducts);
     setCart([]);
@@ -355,6 +416,27 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
     const targetTx = updatedTransactions.find(t => t.id === transactionId);
     if (targetTx) {
       await saveTransactionToCloud(targetTx);
+
+      // Record Cash Refund if paymentMethod was TUNAI
+      if (transaction.paymentMethod === 'tunai' || !transaction.paymentMethod) {
+        const refundAmount = transaction.total - targetTx.total;
+        if (refundAmount > 0) {
+          const cashLog: CashLog = {
+            id: 'cash_' + Math.random().toString(36).substr(2, 9),
+            type: 'keluar',
+            source: 'retur',
+            amount: refundAmount,
+            description: `Retur Penjualan #${transaction.id}`,
+            timestamp: Date.now(),
+            operatorId: currentUser.id,
+            operatorName: currentUser.name,
+            relatedId: transaction.id
+          };
+          setCashLogs(prev => [cashLog, ...prev]);
+          storage.saveCashLog(cashLog);
+          await saveCashLogToCloud(cashLog);
+        }
+      }
     }
 
     await handleUpdateProducts(updatedProducts);
@@ -363,10 +445,62 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
     toast.success(`Berhasil retur ${totalQty} unit produk.`);
   };
 
+  const handleAddCashMovement = async (type: 'masuk' | 'keluar', source: 'modal' | 'penarikan', amount: number, description: string) => {
+    const cashLog: CashLog = {
+      id: 'cash_' + Math.random().toString(36).substr(2, 9),
+      type,
+      source,
+      amount,
+      description: description || (source === 'modal' ? 'Tambahan Modal Admin' : 'Penarikan Admin'),
+      timestamp: Date.now(),
+      operatorId: currentUser.id,
+      operatorName: currentUser.name
+    };
+
+    setCashLogs(prev => [cashLog, ...prev]);
+    storage.saveCashLog(cashLog);
+    await saveCashLogToCloud(cashLog);
+    toast.success(`Berhasil mencatat kas ${type}: ${cashLog.description}`);
+  };
+
+  const handleDeleteCashLog = async (id: string) => {
+    const updatedLogs = cashLogs.filter(log => log.id !== id);
+    setCashLogs(updatedLogs);
+    storage.saveCashLogs(updatedLogs);
+    await deleteCashLogFromCloud(id);
+    toast.info('Catatan kas berhasil dihapus.');
+  };
+
+  const handleAddExpense = async (name: string, amount: number, date: string) => {
+    const expense: ExpenseRecord = {
+      id: 'exp_' + Math.random().toString(36).substr(2, 9),
+      name,
+      amount,
+      date,
+      timestamp: Date.now(),
+      operatorId: currentUser.id,
+      operatorName: currentUser.name
+    };
+
+    setExpenses(prev => [expense, ...prev]);
+    storage.saveExpense(expense);
+    await saveExpenseToCloud(expense);
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    const updatedExpenses = expenses.filter(e => e.id !== id);
+    setExpenses(updatedExpenses);
+    storage.saveExpenses(updatedExpenses);
+    await deleteExpenseFromCloud(id);
+    toast.info('Catatan beban berhasil dihapus.');
+  };
+
   const refreshData = () => {
     setProducts(storage.getProducts());
     setTransactions(storage.getTransactions());
     setPurchases(storage.getPurchases());
+    setCashLogs(storage.getCashLogs());
+    setExpenses(storage.getExpenses());
     setStoreNameState(storage.getStoreName());
     setCart([]);
   };
@@ -453,6 +587,13 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
               <HistoryIcon className="w-4 h-4 mr-2" />
               Penjualan
             </TabsTrigger>
+            <TabsTrigger 
+              value="cash" 
+              className="h-14 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-400 data-[state=active]:text-blue-600 font-bold text-xs uppercase tracking-widest transition-all px-0"
+            >
+              <Wallet className="w-4 h-4 mr-2" />
+              Kas
+            </TabsTrigger>
             {isAdmin && (
               <>
                 <TabsTrigger 
@@ -517,6 +658,15 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
             />
           </TabsContent>
           
+          <TabsContent value="cash" className="min-h-full m-0 outline-none">
+            <CashTab 
+              cashLogs={cashLogs}
+              onAddMovement={handleAddCashMovement}
+              onDeleteLog={handleDeleteCashLog}
+              isAdmin={isAdmin}
+            />
+          </TabsContent>
+          
           {isAdmin && (
             <>
               <TabsContent value="purchases" className="min-h-full m-0 outline-none">
@@ -527,7 +677,13 @@ export default function PosApp({ currentUser, onLogout }: PosAppProps) {
               </TabsContent>
 
               <TabsContent value="reports" className="min-h-full m-0 outline-none">
-                <ReportTab transactions={transactions} />
+                <ReportTab 
+                  transactions={transactions} 
+                  expenses={expenses}
+                  onAddExpense={handleAddExpense}
+                  onDeleteExpense={handleDeleteExpense}
+                  isAdmin={isAdmin}
+                />
               </TabsContent>
 
               <TabsContent value="ai-analysis" className="min-h-full m-0 outline-none">
